@@ -1,6 +1,4 @@
-from airflow import DAG
-from airflow.providers.standard.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
+from airflow.decorators import dag, task
 from datetime import datetime, timedelta
 
 default_args = {
@@ -9,31 +7,29 @@ default_args = {
     "retry_delay": timedelta(minutes=2)
 }
 
-#   Trivial example of a function using XComs to push data, allowing exchange
-#   between tasks
-def get_time(ti):
-    ti.xcom_push(
-        key="current_time", value=datetime.now().strftime("%Y-%m-%d")
-    )
+#   Construct a simple DAG using the TaskFlow API
+@dag(
+    dag_id="very_basic",
+    start_date=datetime(2025, 10, 12, 2),
+    schedule="@daily",
+    description="A two-task DAG to get comfortable with Airflow",
+    default_args=default_args
+)
+def very_basic_dag():
+    #   A trivial task, just returning the current date
+    @task
+    def get_time():
+        return datetime.now().strftime("%Y-%m-%d")
+    
+    #   Hello world, except print the current date
+    @task
+    def hello_world(current_date: str):
+        print(f"Hello World, it is currently {current_date}!")
 
-with DAG(
-        dag_id="very_basic",
-        start_date=datetime(2025, 10, 12, 2),
-        schedule="@daily",
-        description="A one-task DAG to get comfortable with Airflow",
-        default_args=default_args
-    ) as dag:
+    #   Task order. Since we're using the TaskFlow API, "XComs" become an
+    #   argument to the second task
+    time_result = get_time()
+    hello_world(time_result)
 
-    #   Get the current time
-    task1 = PythonOperator(
-        task_id="get_time",
-        python_callable=get_time
-    )
-
-    #   "Hello world" but use XComs to get the current time from task1
-    task2 = BashOperator(
-        task_id="hello_world",
-        bash_command="echo 'Hello World, it is currently {{ task_instance.xcom_pull(task_ids='get_time', key='current_time') }}!'"
-    )
-
-    task1 >> task2
+#   Instantiate the DAG
+very_basic_dag()
