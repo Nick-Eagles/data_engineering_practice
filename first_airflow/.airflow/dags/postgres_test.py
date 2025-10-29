@@ -3,7 +3,7 @@
 
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 default_args = {
     "owner": "Nick",
@@ -18,9 +18,9 @@ with DAG(
     description="A minimal DAG connecting to a local Postgres database",
     default_args=default_args
 ) as dag:
-    task1 = PostgresOperator(
+    task1 = SQLExecuteQueryOperator(
         task_id="create_table",
-        postgres_conn_id="postgres_localhost",
+        conn_id="postgres_localhost",
         sql="""
         CREATE TABLE IF NOT EXISTS test_table (
             dt date,
@@ -29,3 +29,5 @@ with DAG(
         );
         """
     )
+
+    task1
