@@ -30,4 +30,14 @@ with DAG(
         """
     )
 
-    task1
+    task2 = SQLExecuteQueryOperator(
+        task_id="insert_date",
+        conn_id="postgres_localhost",
+        sql="""
+        INSERT INTO test_table (dt, dag_id) values (
+            ' {{ ds }} ', '{{ dag.dag_id }}'
+        );
+        """
+    )
+
+    task1 >> task2
