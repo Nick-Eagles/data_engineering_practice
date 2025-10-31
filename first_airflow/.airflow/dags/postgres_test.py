@@ -25,7 +25,8 @@ with DAG(
         CREATE TABLE IF NOT EXISTS test_table (
             dt date,
             dag_id character varying,
-            primary key (dt, dag_id)
+            run_id character varying,
+            primary key (dt, dag_id, run_id)
         );
         """
     )
@@ -34,8 +35,8 @@ with DAG(
         task_id="insert_date",
         conn_id="postgres_localhost",
         sql="""
-        INSERT INTO test_table (dt, dag_id) values (
-            ' {{ ds }} ', '{{ dag.dag_id }}'
+        INSERT INTO test_table (dt, dag_id, run_id) values (
+            '{{ ds }}', '{{ dag.dag_id }}', '{{ run_id }}'
         );
         """
     )
