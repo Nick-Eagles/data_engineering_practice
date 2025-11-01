@@ -1,6 +1,11 @@
+#   Implement a simple ETL pipeline orchestrated with Airflow: each day, extract
+#   that day's associated order data from a Postgres database (in practice
+#   hosted locally), then load into S3 (really a local MinIO instance). This
+#   particular workflow doesn't feature much of a transformation step
+
 from datetime import datetime, timedelta
 import pandas as pd
-from pyhere import here
+from tempfile import NamedTemporaryFile
 
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
@@ -39,7 +44,11 @@ def postgres_to_s3(data_interval_start, data_interval_end):
     rows = cursor.fetchall()
     column_names = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(rows, columns=column_names)
-    df.to_csv(here(f'temp_{start_date}.csv'), index=False)
+
+    #   Write the data to a temporary CSV file
+    with NamedTemporaryFile(mode='w', suffix=f'_{start_date}.csv', delete=False) as temp_file:
+        df.to_csv(temp_file.name, index=False)
+        temp_csv_path = temp_file.name
     
     #   Close database connection
     cursor.close()
@@ -48,7 +57,7 @@ def postgres_to_s3(data_interval_start, data_interval_end):
     #   Upload today's CSV to S3
     s3_hook = S3Hook(aws_conn_id='minio_conn')
     s3_hook.load_file(
-        filename=here(f'temp_{start_date}.csv'),
+        filename=temp_csv_path,
         key=f'orders_{start_date}.csv',
         bucket_name='airflow-test',
         replace=True
