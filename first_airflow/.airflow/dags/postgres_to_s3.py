@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 import pandas as pd
-import os
 from pyhere import here
+
+from airflow import DAG
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 default_args = {
     "owner": "Nick",
@@ -12,18 +12,33 @@ default_args = {
     "retry_delay": timedelta(minutes=2)
 }
 
-def postgres_to_s3():
-    #   Connect to the Postgres db and extract some example rows
+def postgres_to_s3(data_interval_start, data_interval_end):
+    #   Connect to the Postgres db and extract rows associated with the current
+    #   date
     hook = PostgresHook(postgres_conn_id="postgres_localhost")
     conn = hook.get_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM orders WHERE date <= '2022-05-01';")
+    
+    start_dt = datetime.fromisoformat(data_interval_start.replace('Z', '+00:00'))
+    end_dt = datetime.fromisoformat(data_interval_end.replace('Z', '+00:00'))
+
+    #   For manually triggered DAG runs
+    if start_dt == end_dt:
+        end_dt = start_dt + timedelta(days=1)
+    
+    #   Parse the dates into strings of just the date portion
+    start_date = start_dt.strftime('%Y-%m-%d')
+    end_date = end_dt.strftime('%Y-%m-%d')
+    
+    cursor.execute(
+        f"SELECT * FROM orders WHERE date >= '{start_date}' AND date < '{end_date}';"
+    )
     
     #   Convert to DataFrame and export to a temporary CSV
     rows = cursor.fetchall()
     column_names = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(rows, columns=column_names)
-    df.to_csv(here('temp.csv'), index=False)
+    df.to_csv(here(f'temp_{start_date}.csv'), index=False)
     
     #   Close database connection
     cursor.close()
@@ -31,9 +46,18 @@ def postgres_to_s3():
 
 with DAG(
     dag_id="postgres_to_s3",
-    start_date=datetime(2025, 11, 1, 2),
+    start_date=datetime(2025, 11, 1),
     schedule="@daily",
     description="Move data from a Postgres database to S3",
     default_args=default_args
 ) as dag:
-    pass
+    task1 = PythonOperator(
+        task_id="postgres_to_s3",
+        python_callable=postgres_to_s3,
+        op_kwargs={
+            "data_interval_start": "{{ data_interval_start }}",
+            "data_interval_end": "{{ data_interval_end }}"
+        }
+    )
+
+    task1
