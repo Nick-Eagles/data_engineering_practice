@@ -5,6 +5,7 @@ from pyhere import here
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 default_args = {
     "owner": "Nick",
@@ -43,6 +44,15 @@ def postgres_to_s3(data_interval_start, data_interval_end):
     #   Close database connection
     cursor.close()
     conn.close()
+
+    #   Upload today's CSV to S3
+    s3_hook = S3Hook(aws_conn_id='minio_conn')
+    s3_hook.load_file(
+        filename=here(f'temp_{start_date}.csv'),
+        key=f'orders_{start_date}.csv',
+        bucket_name='airflow-test',
+        replace=True
+    )
 
 with DAG(
     dag_id="postgres_to_s3",
