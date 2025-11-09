@@ -73,4 +73,4 @@ ORDER BY gender_marital_group;
 Obviously we lose interactivity with this screenshot, but this is what the
 dashboard looked like with every component in place:
 
-[](dashboard.png)
+![The complete dashboard](dashboard.png)
