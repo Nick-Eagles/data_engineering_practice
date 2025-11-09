@@ -3,7 +3,7 @@
 ## Overview
 
 After getting a glimpse of the loan eligibility dataset and generating some
-exploratory plots in a [Databricks notebook](databricks/notebooks/explore_data.ipynb),
+exploratory plots in a [Databricks notebook](notebooks/explore_data.ipynb),
 I moved on to better understand the dataset through querying in the Databricks
 SQL Editor. Afterwards, I built a dashboard to summarize and highlight some key
 findings.
