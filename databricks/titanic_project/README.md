@@ -28,7 +28,7 @@ downstream dependent dashboard. This was a simple serial workflow:
 ### SQL Editor and dashboard
 
 From there, I made queries in the SQL Editor (see details [here](queries.md)),
-which because visualizations and then components in the final dashboard.
+which became visualizations and then components in the final dashboard.
 I practiced scheduling the workflow daily such that the dashboard would
 automatically update with new data (if we weren't using a static source).
 This is how the dashboard looked:
