@@ -4,7 +4,7 @@ Using the well-known titanic dataset, my goals were to practice data-engineering
 skills in Databricks. I gained experience with the lakehouse architecture, Unity
 Catalog, Delta tables, the bronze -> silver -> gold model, warehouse-style
 querying in the SQL Editor, dashboards, and orchestrating ETL pipelines with
-Databricks workflows.
+Databricks workflows. As a bonus, I recreated the final dashboard in Tableau.
 
 ## The workflow
 
@@ -34,3 +34,15 @@ automatically update with new data (if we weren't using a static source).
 This is how the dashboard looked:
 
 ![The final dashboard](images/dashboard.png)
+
+### Tableau dashboard
+
+I wanted to also practice visualizing the main takeaways in Tableau. I
+connected Tableau to my Databricks account and built a very similar dashboard,
+though I added some additional interactivity as a bonus. For example, clicking
+a particular sex and passenger class would filter port-of-departure-related
+dashboard components to just that sex + class combination. Similarly,
+filtering to a particular port in the bottom two dashboard components would
+show the survival rate by sex, class, and that port.
+
+Check out my Tableau dashboard [here](https://public.tableau.com/app/profile/nick.eagles/viz/TitanicDatasetKeyFindings/main_dashboard#1)!
